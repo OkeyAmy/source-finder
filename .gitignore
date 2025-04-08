@@ -73,7 +73,7 @@ chat_history/
 
 # Unused files and directories we want to track but not actively use
 # Tracking them for future reference but they are not part of the active codebase
-app/core/source_finder.py  # Superseded by app/services/source_finder.py 
+app/core/source_finder.py
 cyber-source-forge/
 
 dummy.py
