@@ -75,6 +75,11 @@ async def process_query(request: QueryRequest):
                 chat_history=chat_history, 
                 filters=source_filters
             )
+
+            # Print debug info about sources
+            print(f"Debug sources count: {len(sources)}")
+            if sources:
+                print(f"Debug first source: {sources[0]}")
         except Exception as source_error:
             # Handle source finder errors gracefully
             print(f"Error in source finder: {str(source_error)}")
@@ -91,7 +96,7 @@ async def process_query(request: QueryRequest):
         assistant_message = Message(
             role="assistant",
             content=response_text,
-            sources=sources,
+            sources=sources,  # Store the sources with the message
             timestamp=datetime.now().isoformat()
         )
         
@@ -131,10 +136,40 @@ async def get_sources(session_id: Optional[str] = Query(None)):
         # Extract all sources from assistant messages
         all_sources = []
         for message in messages:
-            if message.role == "assistant" and message.sources:
-                all_sources.extend(message.sources)
+            if (message.role == "assistant" and 
+                hasattr(message, 'sources') and 
+                isinstance(message.sources, list) and 
+                message.sources):
+                # Filter out any invalid sources and ensure required fields
+                valid_sources = []
+                for source in message.sources:
+                    if isinstance(source, dict) and source.get('title') and source.get('link'):
+                        # Ensure all required fields are present with defaults if missing
+                        valid_source = {
+                            "title": source.get('title', ''),
+                            "link": source.get('link', ''),
+                            "source": source.get('source', 'Unknown'),
+                            "snippet": source.get('snippet', ''),
+                            "media": source.get('media', []),
+                            "logo": source.get('logo', ''),
+                            "num": source.get('num', len(valid_sources) + 1)
+                        }
+                        valid_sources.append(valid_source)
+                
+                all_sources.extend(valid_sources)
         
-        print(f"✅ Found {len(all_sources)} sources for session {session_id}")
+        print(f"✅ Found {len(all_sources)} valid sources for session {session_id}")
+        
+        # Add debug output
+        if len(all_sources) == 0:
+            print("⚠️ No valid sources found in session messages")
+            print(f"Message count: {len(messages)}")
+            for i, msg in enumerate(messages):
+                has_sources = hasattr(msg, 'sources') and msg.sources
+                print(f"Message {i} role: {msg.role}, has sources: {has_sources}")
+                if has_sources:
+                    print(f"Sources count: {len(msg.sources)}")
+        
         return SourcesResponse(sources=all_sources)
     except Exception as e:
         print(f"❌ Error retrieving sources: {str(e)}")
