@@ -465,31 +465,39 @@ class SourceFinder:
             for idx, res in enumerate(results[:10], 1):
                 ref_num = len(self.source_references) + 1
                 
+                # Ensure all required fields are present
                 source_entry = {
                     "num": ref_num,
-                    "title": res['title'],
-                    "link": res['link'],
+                    "title": res.get('title', f"{source_type} source {idx}"),
+                    "link": res.get('link', ''),
                     "source": source_type,
                     "preview": res.get('snippet', ''),
                     "images": res.get('media', []),
                     "logo": res.get('logo', '')
                 }
                 
+                # Add to source references list
                 self.source_references.append(source_entry)
                 
                 entry = [
-                    f"### [Source {ref_num}] {res['title']}",
+                    f"### [Source {ref_num}] {res.get('title', f'{source_type} source {idx}')}",
                     f"**Source Type:** {source_type}",
-                    f"**URL:** {res['link']}",
+                    f"**URL:** {res.get('link', '')}",
                     f"**Preview:**\n{res.get('snippet', '')[:1000]}"
                 ]
                 
                 if res.get('media'):
                     # Convert all image entries to strings
-                    media_strs = [img if isinstance(img, str) else img['url'] for img in res['media'][:3]]
+                    media_strs = [img if isinstance(img, str) else img.get('url', '') for img in res.get('media', [])[:3]]
                     entry.append(f"**Media:** {', '.join(media_strs)}")
                 
                 formatted.append("\n".join(entry) + "\n" + "-"*50 + "\n")
+        
+        # Debug output
+        print(f"Formatted {len(self.source_references)} source references")
+        if self.source_references:
+            for i, ref in enumerate(self.source_references[:3]):
+                print(f"Source {i+1}: {ref['title']} ({ref['source']})")
         
         return "\n".join(formatted)
     
@@ -972,6 +980,9 @@ class SourceFinder:
             Tuple of (response_text, sources)
         """
         try:
+            # Reset source references for this query
+            self.source_references = []
+            
             # Track the user's filter preferences
             selected_sources = None
             
@@ -1012,6 +1023,11 @@ class SourceFinder:
             async for chunk in self.generate_response(query, sources, chat_history):
                 response_text += chunk
             
+            # Debug info for source references
+            print(f"Source references count: {len(self.source_references)}")
+            if self.source_references:
+                print(f"First source reference: {self.source_references[0]}")
+            
             # Filter source_references if needed
             if selected_sources:
                 # Create a new filtered list based on user selections
@@ -1041,7 +1057,11 @@ class SourceFinder:
                 
                 return response_text, filtered_references
             
-            return response_text, self.source_references
+            # Make a deep copy of source_references to avoid issues with reference sharing
+            import copy
+            result_sources = copy.deepcopy(self.source_references)
+            
+            return response_text, result_sources
         except Exception as e:
             print(f"Error in process_query: {str(e)}")
             import traceback
@@ -1080,25 +1100,25 @@ class SourceFinder:
             conversation_context += "\n"
 
         system_instruction = """**Research Analysis Protocol**
-    1. Cross-reference all sources for consensus/conflicts
-    2. Validate media against source context
-    3. Highlight statistical significance
-    4. Note temporal relevance
-    5. Rate source credibility
-    6. Maintain neutral academic tone
-    7. Analyze all provided sources thoroughly
-    8. Structure response with these sections:
-    - 📌 Executive Summary (3-5 bullet points)
-    - 🔍 Key Findings (numbered list with citations [1][2])
-    - ⚖️ Controversies/Debates
-    - ❓ Unanswered Questions
-    - 📚 Recommended Further Research
+1. Cross-reference all sources for consensus/conflicts
+2. Validate media against source context
+3. Highlight statistical significance
+4. Note temporal relevance
+5. Rate source credibility
+6. Maintain neutral academic tone
+7. Analyze all provided sources thoroughly
+8. Structure response with these sections:
+- 📌 Executive Summary (3-5 bullet points)
+- 🔍 Key Findings (numbered list with citations [1][2])
+- ⚖️ Controversies/Debates
+- ❓ Unanswered Questions
+- 📚 Recommended Further Research
 9. Use markdown formatting with **bold** and italics
 10. Always cite sources using [number] notation
 11. Highlight statistics with ✅
 12. Mention conflicting viewpoints with ⚠️
 13. Reference previous conversation context if provided
-    """
+"""
 
         typing_task = asyncio.create_task(self._async_typing("Analyzing multi-source evidence..."))
 
@@ -1120,20 +1140,20 @@ class SourceFinder:
                         "role": "user",
                         "parts": [{
                             "text": f"""**Research Request**
-    Query: {query}
+Query: {query}
 
-    {conversation_context}
-    **Aggregated Sources**
-    {formatted_sources}
+{conversation_context}
+**Aggregated Sources**
+{formatted_sources}
 
-    **Media Analysis Context**
-    {media_analysis}
+**Media Analysis Context**
+{media_analysis}
 
-    **Analysis Guidelines**
-    - Verify image/video timestamps against claims
-    - Check for source domain reputation
-    - Compare academic vs social media perspectives
-    - Highlight significant statistical outliers"""
+**Analysis Guidelines**
+- Verify image/video timestamps against claims
+- Check for source domain reputation
+- Compare academic vs social media perspectives
+- Highlight significant statistical outliers"""
                         }]
                     }]
                 )
@@ -1146,23 +1166,29 @@ class SourceFinder:
                 pass
 
             # Stream response
+            full_response = ""
             for chunk in response_stream:
-                if hasattr(chunk, 'candidates') and chunk.candidates:
+                if hasattr(chunk, 'text'):
+                    full_response += chunk.text
                     yield chunk.text
-            # Add source gallery
-            yield "\n\n## 📚 Source Gallery\n" + "\n".join(
-                f"{ref['num']}. **[{ref['source']}] {ref['title']}**\n{ref['link']}"
-                for ref in self.source_references
-            )
+            
+            # Add source gallery if we have sources
+            if self.source_references:
+                source_gallery = "\n\n## 📚 Source Gallery\n" + "\n".join(
+                    f"{ref['num']}. **[{ref['source']}] {ref['title']}**\n{ref['link']}"
+                    for ref in self.source_references
+                )
+                yield source_gallery
+            else:
+                # Log warning if no sources were found
+                print("⚠️ No sources to add to the gallery")
 
         except Exception as e:
-            yield f"❌ Analysis generation failed: {str(e)}"
+            error_message = f"❌ Analysis generation failed: {str(e)}"
+            print(error_message)
             import traceback
-            print(f"Error: {str(e)}")
             print(traceback.format_exc())
-        finally:
-            if not typing_task.done():
-                typing_task.cancel()
+            yield error_message
 
     async def _async_typing(self, message: str):
         """
