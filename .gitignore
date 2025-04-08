@@ -1,0 +1,89 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Local development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Playwright
+node_modules/
+playwright-report/
+test-results/
+
+# Database
+*.db
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+
+# Project specific
+chat_history/
+
+# Keep these files
+!app/core/
+!app/schemas/
+!app/services/
+
+# Unused files and directories we want to track but not actively use
+# Tracking them for future reference but they are not part of the active codebase
+app/core/source_finder.py  # Superseded by app/services/source_finder.py 
+cyber-source-forge/
+
+dummy.py
+
+source_finder.py
