@@ -10,8 +10,14 @@ ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
     PYTHONPATH=/app
 
-# Install system dependencies for Playwright
+# Install system dependencies and build tools for Python packages
 RUN apt-get update && apt-get install -y \
+    # Build tools and compilers
+    build-essential \
+    gcc \
+    g++ \
+    python3-dev \
+    # Playwright dependencies
     libgtk-3-0 \
     libdbus-glib-1-2 \
     libxt6 \
@@ -35,6 +41,7 @@ RUN apt-get update && apt-get install -y \
     libatk-bridge2.0-0 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
+    # Cleanup
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -43,6 +50,7 @@ COPY requirements.txt .
 
 # Upgrade pip and install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir wheel setuptools && \
     pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright and only the Chromium browser
