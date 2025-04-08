@@ -2,7 +2,7 @@
 uvicorn==0.23.2
 pydantic==2.4.2
 python-dotenv==1.0.0
-langchain==0.0.335
+langchain==0.2.5
 langchain-google-genai==0.0.5
 google-generativeai==0.3.1
 aiohttp==3.8.6
