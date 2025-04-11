@@ -1173,15 +1173,15 @@ Query: {query}
                     yield chunk.text
             
             # Add source gallery if we have sources
-            if self.source_references:
-                source_gallery = "\n\n## 📚 Source Gallery\n" + "\n".join(
-                    f"{ref['num']}. **[{ref['source']}] {ref['title']}**\n{ref['link']}"
-                    for ref in self.source_references
-                )
-                yield source_gallery
-            else:
+         #   if self.source_references:
+             #   source_gallery = "\n\n## 📚 Source Gallery\n" + "\n".join(
+               #     f"{ref['num']}. **[{ref['source']}] {ref['title']}**\n{ref['link']}"
+              #      for ref in self.source_references
+           #     )
+           #     yield source_gallery
+        #    else:
                 # Log warning if no sources were found
-                print("⚠️ No sources to add to the gallery")
+        #        print("⚠️ No sources to add to the gallery")
 
         except Exception as e:
             error_message = f"❌ Analysis generation failed: {str(e)}"
