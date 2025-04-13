@@ -1120,6 +1120,8 @@ class SourceFinder:
 13. Reference previous conversation context if provided
 This is solely majored for researchers. Create a follow up questions to help them better explore their question.
 Make it very detailed include points that i might have not specified. make sure it aligns t ath that will help the researcher in their research 
+Don't include anything related to this at the beginning of your answer: "Based on the provided sources"
+Include any other points that might help the users based on their specific requests/question in other to help the researcher explore amd get the right materials for their research 
 """
 
         typing_task = asyncio.create_task(self._async_typing("Analyzing multi-source evidence..."))
