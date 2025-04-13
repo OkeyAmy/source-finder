@@ -1119,6 +1119,7 @@ class SourceFinder:
 12. Mention conflicting viewpoints with ⚠️
 13. Reference previous conversation context if provided
 This is solely majored for researchers. Create a follow up questions to help them better explore their question.
+Make it very detailed include points that i might have not specified. make sure it aligns t ath that will help the researcher in their research 
 """
 
         typing_task = asyncio.create_task(self._async_typing("Analyzing multi-source evidence..."))
